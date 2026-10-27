@@ -193,7 +193,7 @@ def dispatch(s, act, new, approval=None):
 def advance(s, new):
     if s["status"] != "waiting":
         return
-    eff = s["effect"]
+    eff = next((a for a in s["actions"] if a["actionId"] == s["effect"]["actionId"]), s["effect"])
     diags = [a for a in s["actions"] if a["phase"] == "diagnostic"]
     if any(a["state"] == "pending" for a in diags):
         return
