@@ -71,7 +71,8 @@ def call_llm(messages, budget):
               "response_format": {"type": "json_object"}},
         timeout=budget,
     )
-    r.raise_for_status()
+    if r.status_code >= 400:
+        raise RuntimeError(f"LLM HTTP {r.status_code} from {LLM_URL} model={LLM_MODEL}: {r.text[:300]}")
     txt = r.json()["choices"][0]["message"]["content"]
     m = re.search(r"\{.*\}", txt, re.S)
     return json.loads(m.group(0))
@@ -406,7 +407,9 @@ def create():
         tm0 = time.time_ns()
         try:
             plan = make_plan(body)
-        except Exception:
+        except Exception as e:
+            # log the reason server-side only (never returned to the caller)
+            print(f"PLAN FAILED: {type(e).__name__}: {str(e)[:400]}", flush=True)
             return jerr(502, "planning failed")
         tm1 = time.time_ns()
         eff = new_action("effect", plan["effect"]["toolName"], plan["effect"]["arguments"],
