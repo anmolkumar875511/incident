@@ -475,7 +475,10 @@ def health():
 
 
 @app.errorhandler(Exception)
-def boom(_e):
+def boom(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):  # 404/405 etc. keep their real status
+        return jerr(e.code or 500, "error")
     return jerr(500, "internal error")  # never leak input
 
 
